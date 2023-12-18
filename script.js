@@ -54,13 +54,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 movePiece(selectedPiece, clickedRow, clickedCol);
                 cell.innerHTML = ''; // Usunięcie poprzedniego pionka z komórki
                 cell.appendChild(selectedPiece); // Dodanie nowego pionka do komórki
-                selectedPiece.classList.remove('selected');
                 currentPlayer = (currentPlayer === 'black') ? 'red' : 'black';
-                selectedPiece = null; // Po ruchu zerujemy wybór
-            } else {
+                clearSelection();
+                selectPieceWithMoves();
+            } else if (cell.children.length > 0 && cell.children[0].dataset.color === currentPlayer) {
                 clearSelection();
                 selectedPiece = cell.children[0];
                 selectedPiece.classList.add('selected');
+            } else {
+                clearSelection();
+                selectPieceWithMoves();
             }
         } else if (cell.children.length > 0 && cell.children[0].dataset.color === currentPlayer) {
             selectedPiece = cell.children[0];
@@ -71,6 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function isValidMove(selectedRow, selectedCol, newRow, newCol) {
+        if (!selectedPiece || !selectedPiece.dataset) {
+            return false;
+        }
+
         const color = selectedPiece.dataset.color;
         const rowDiff = Math.abs(newRow - selectedRow);
         const colDiff = Math.abs(newCol - selectedCol);
@@ -96,4 +103,25 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedPiece.classList.remove('selected');
         }
     }
+
+    function isValidPiece(piece) {
+        return piece && piece.dataset && piece.dataset.color === currentPlayer;
+    }
+
+    function selectPieceWithMoves() {
+        selectedPiece = null;
+
+        for (const piece of pieces) {
+            const row = parseInt(piece.dataset.row);
+            const col = parseInt(piece.dataset.col);
+
+            if (isValidPiece(piece) && (isValidMove(row, col, row + 1, col - 1) || isValidMove(row, col, row + 1, col + 1))) {
+                selectedPiece = piece;
+                selectedPiece.classList.add('selected');
+                break;
+            }
+        }
+    }
+
+    selectPieceWithMoves();
 });
