@@ -39,3 +39,7 @@
 .red {
     background-color: #f00;
 }
+
+.piece.selected {
+    border: 2px solid yellow;
+}
