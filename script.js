@@ -50,40 +50,56 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedRow = parseInt(selectedPiece.dataset.row);
             const selectedCol = parseInt(selectedPiece.dataset.col);
 
-            if (isValidMove(selectedRow, selectedCol, clickedRow, clickedCol) && !cellHasPiece(clickedRow, clickedCol)) {
+            if (isValidMove(selectedPiece, selectedRow, selectedCol, clickedRow, clickedCol) && !cellHasPiece(clickedRow, clickedCol)) {
                 movePiece(selectedPiece, clickedRow, clickedCol);
-                cell.innerHTML = ''; // Usunięcie poprzedniego pionka z komórki
-                cell.appendChild(selectedPiece); // Dodanie nowego pionka do komórki
-                currentPlayer = (currentPlayer === 'black') ? 'red' : 'black';
+                const targetCell = getCell(clickedRow, clickedCol);
+                targetCell.appendChild(selectedPiece);
+
+                const middleRow = (clickedRow + selectedRow) / 2;
+                const middleCol = (clickedCol + selectedCol) / 2;
+                const middleCell = getCell(middleRow, middleCol);
+
+                if (cellHasPiece(middleRow, middleCol) && middleCell.children[0].dataset.color !== currentPlayer) {
+                    const capturedPiece = middleCell.children[0];
+                    middleCell.removeChild(capturedPiece);
+                    pieces.splice(pieces.indexOf(capturedPiece), 1);
+                }
+
                 clearSelection();
-                selectPieceWithMoves();
-            } else if (cell.children.length > 0 && cell.children[0].dataset.color === currentPlayer) {
+                currentPlayer = (currentPlayer === 'black') ? 'red' : 'black';
+                selectedPiece = null;
+            } else if (cellHasPiece(clickedRow, clickedCol) && cell.children.length > 0 && cell.children[0].dataset.color === currentPlayer) {
                 clearSelection();
                 selectedPiece = cell.children[0];
                 selectedPiece.classList.add('selected');
             } else {
                 clearSelection();
-                selectPieceWithMoves();
             }
-        } else if (cell.children.length > 0 && cell.children[0].dataset.color === currentPlayer) {
+        } else if (cellHasPiece(clickedRow, clickedCol) && cell.children.length > 0 && cell.children[0].dataset.color === currentPlayer) {
             selectedPiece = cell.children[0];
             selectedPiece.classList.add('selected');
         }
 
-        event.preventDefault(); // Zapobiega zaznaczaniu tekstu po kliknięciu
+        event.preventDefault();
     }
 
-    function isValidMove(selectedRow, selectedCol, newRow, newCol) {
-        if (!selectedPiece || !selectedPiece.dataset) {
-            return false;
-        }
-
+    function isValidMove(selectedPiece, selectedRow, selectedCol, newRow, newCol) {
         const color = selectedPiece.dataset.color;
         const rowDiff = Math.abs(newRow - selectedRow);
         const colDiff = Math.abs(newCol - selectedCol);
 
         if ((color === 'black' && newRow > selectedRow) || (color === 'red' && newRow < selectedRow)) {
-            return rowDiff === 1 && colDiff === 1;
+            if (rowDiff === 1 && colDiff === 1) {
+                return true;
+            } else if (rowDiff === 2 && colDiff === 2) {
+                const middleRow = (newRow + selectedRow) / 2;
+                const middleCol = (newCol + selectedCol) / 2;
+                const middleCell = getCell(middleRow, middleCol);
+
+                if (cellHasPiece(middleRow, middleCol) && middleCell.children[0].dataset.color !== color) {
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -104,24 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function isValidPiece(piece) {
-        return piece && piece.dataset && piece.dataset.color === currentPlayer;
+    function getCell(row, col) {
+        return document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
     }
-
-    function selectPieceWithMoves() {
-        selectedPiece = null;
-
-        for (const piece of pieces) {
-            const row = parseInt(piece.dataset.row);
-            const col = parseInt(piece.dataset.col);
-
-            if (isValidPiece(piece) && (isValidMove(row, col, row + 1, col - 1) || isValidMove(row, col, row + 1, col + 1))) {
-                selectedPiece = piece;
-                selectedPiece.classList.add('selected');
-                break;
-            }
-        }
-    }
-
-    selectPieceWithMoves();
 });
